@@ -14,6 +14,8 @@ namespace Lab7
     {
         public Form1()
         {
+            //
+            
             InitializeComponent();
         }
     }

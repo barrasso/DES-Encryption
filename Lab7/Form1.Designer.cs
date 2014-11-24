@@ -37,7 +37,7 @@
             this.BackColor = System.Drawing.Color.FloralWhite;
             this.ClientSize = new System.Drawing.Size(535, 280);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "File Encrypt/Decrypt";
             this.ResumeLayout(false);
 
         }
