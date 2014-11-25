@@ -77,6 +77,7 @@
             this.encryptButton.TabIndex = 4;
             this.encryptButton.Text = "Encrypt";
             this.encryptButton.UseVisualStyleBackColor = true;
+            this.encryptButton.Click += new System.EventHandler(this.encryptButton_Click);
             // 
             // decryptButton
             // 
@@ -86,6 +87,7 @@
             this.decryptButton.TabIndex = 5;
             this.decryptButton.Text = "Decrypt";
             this.decryptButton.UseVisualStyleBackColor = true;
+            this.decryptButton.Click += new System.EventHandler(this.decryptButton_Click);
             // 
             // fileButton
             // 
@@ -96,6 +98,7 @@
             this.fileButton.Size = new System.Drawing.Size(34, 28);
             this.fileButton.TabIndex = 6;
             this.fileButton.UseVisualStyleBackColor = false;
+            this.fileButton.Click += new System.EventHandler(this.fileButton_Click);
             // 
             // Form1
             // 
