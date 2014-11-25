@@ -66,7 +66,7 @@ namespace Lab7
             {
                 try
                 {
-                    // if the file is not empty
+                    // if the file stream is not empty
                     if ((myStream = openDialog.OpenFile()) != null)
                     {
                         using (myStream)
@@ -97,9 +97,9 @@ namespace Lab7
                 return true;
             }
 
-            // check for valid file and empty file text box
-            string fileString = fileTextBox.Text.ToString();
-            if (fileString.Length == 0)
+            // check for valid file
+            fileNameString = fileTextBox.Text.ToString();
+            if (fileNameString.Length == 0)
             {
                 MessageBox.Show("Could not open source or destination file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return true;
@@ -119,7 +119,8 @@ namespace Lab7
                 return true;
             }
 
-            // check for valid DES file and empty file text box
+            // check for valid DES file OR empty file text box
+            
 
             else
                 return false;
