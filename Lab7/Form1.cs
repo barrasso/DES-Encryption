@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Security.Cryptography;
 
 
 namespace Lab7
@@ -16,6 +17,7 @@ namespace Lab7
     {
         // strings
         public string fileNameString;
+        public string outputFileName;
         public string keyString;
 
         // default constructor
@@ -37,7 +39,8 @@ namespace Lab7
             // error check
             if (!errorWithEncryption())
             {
-                // encrypt
+                // encrypt, prompt for overwrites
+                encryptFile(fileNameString, outputFileName, keyString);
             }
         }
 
@@ -46,7 +49,7 @@ namespace Lab7
             // error check
             if (!errorWithDecryption())
             {
-                // decrypt, prompt for overrites
+                // decrypt, prompt for overwrites
             }
         }
 
@@ -73,7 +76,10 @@ namespace Lab7
                         {
                             // set file text box as file name
                             fileNameString = openDialog.FileName;
-                            fileTextBox.Text = fileNameString; 
+                            fileTextBox.Text = fileNameString;
+ 
+                            // set output file name
+                            outputFileName = fileNameString + ".des";
                         }
                     }
                 }
@@ -84,6 +90,39 @@ namespace Lab7
             }
         }
 
+        private static void encryptFile(string fileNameIn, string fileNameOut, string secretKey)
+        {
+            try
+            {
+                // init file streams to handle input and output
+                FileStream inStream = new FileStream(fileNameIn, FileMode.Open, FileAccess.Read);
+                FileStream outStream = new FileStream(fileNameOut, FileMode.OpenOrCreate, FileAccess.Write);
+                outStream.SetLength(0);
+
+                // instantiate DES provider
+                DES des = new DESCryptoServiceProvider();
+                des.Key = ASCIIEncoding.ASCII.GetBytes(secretKey);  // MUST FIX:  ONLY WORKS IF KEY IS 8 CHARS
+                des.IV = ASCIIEncoding.ASCII.GetBytes(secretKey);   // MUST FIX:  ONLY WORKS IF KEY IS 8 CHARS
+
+                // create instance of CryptoStream to obtain encrypting object
+                ICryptoTransform desEncrypt = des.CreateEncryptor();
+                CryptoStream encStream = new CryptoStream(outStream, desEncrypt, CryptoStreamMode.Write);
+
+                // read input file and write to output using provided key
+                byte[] byteInput = new byte[inStream.Length - 1]; // MUST FIX:  ONLY WORKS IF KEY IS 8 CHARS
+                inStream.Read(byteInput, 0, byteInput.Length);
+                encStream.Write(byteInput, 0, byteInput.Length);
+            }
+            catch (CryptographicException e)
+            {
+                Console.WriteLine("Error: {0}", e.Message);
+                return;
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                Console.WriteLine("Error: {0}", e.Message);
+            }
+        }
 
         /* Error detection methods */
 
