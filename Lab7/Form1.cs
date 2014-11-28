@@ -39,7 +39,8 @@ namespace Lab7
             // error check
             if (!errorWithEncryption())
             {
-                // encrypt, prompt for overwrites
+                // perform encryption
+                keyString = adjustKey(keyString);
                 encryptFile(fileNameString, outputFileName, keyString);
             }
         }
@@ -90,7 +91,7 @@ namespace Lab7
             }
         }
 
-        private static void encryptFile(string fileNameIn, string fileNameOut, string secretKey)
+        private void encryptFile(string fileNameIn, string fileNameOut, string secretKey)
         {
             try
             {
@@ -98,20 +99,26 @@ namespace Lab7
                 FileStream inStream = new FileStream(fileNameIn, FileMode.Open, FileAccess.Read);
                 FileStream outStream = new FileStream(fileNameOut, FileMode.OpenOrCreate, FileAccess.Write);
                 outStream.SetLength(0);
+                Console.WriteLine("Encrypting file...");
 
                 // instantiate DES provider
                 DES des = new DESCryptoServiceProvider();
-                des.Key = ASCIIEncoding.ASCII.GetBytes(secretKey);  // MUST FIX:  ONLY WORKS IF KEY IS 8 CHARS
-                des.IV = ASCIIEncoding.ASCII.GetBytes(secretKey);   // MUST FIX:  ONLY WORKS IF KEY IS 8 CHARS
+                des.Key = ASCIIEncoding.ASCII.GetBytes(secretKey); 
+                des.IV = ASCIIEncoding.ASCII.GetBytes(secretKey);
 
                 // create instance of CryptoStream to obtain encrypting object
                 ICryptoTransform desEncrypt = des.CreateEncryptor();
                 CryptoStream encStream = new CryptoStream(outStream, desEncrypt, CryptoStreamMode.Write);
 
                 // read input file and write to output using provided key
-                byte[] byteInput = new byte[inStream.Length - 1]; // MUST FIX:  ONLY WORKS IF KEY IS 8 CHARS
+                byte[] byteInput = new byte[secretKey.Length - 1];
                 inStream.Read(byteInput, 0, byteInput.Length);
                 encStream.Write(byteInput, 0, byteInput.Length);
+
+                // close streams
+                inStream.Close();
+                outStream.Close();
+                Console.WriteLine("Encryption Success. Output: {0}",fileNameOut);
             }
             catch (CryptographicException e)
             {
@@ -122,6 +129,17 @@ namespace Lab7
             {
                 Console.WriteLine("Error: {0}", e.Message);
             }
+
+        }
+
+        public string adjustKey(string key)
+        {
+            if (key.Length == 8) return key;
+            else if (key.Length > 8)
+                return key.Remove(7, (key.Length - 8));
+            else if (key.Length < 8)
+                return key.PadRight(8, 'x');
+            else return key;
         }
 
         /* Error detection methods */
