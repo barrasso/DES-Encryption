@@ -20,14 +20,14 @@ namespace Lab7
         public string outputFileName;
         public string keyString;
 
+        // byte array
+        public byte[] key;
+
         // default constructor
         public Form1()
         {
             InitializeComponent();
         }
-
-
-        /* Button clicked methods */
 
         private void fileButton_Click(object sender, EventArgs e)
         {
@@ -39,9 +39,21 @@ namespace Lab7
             // error check
             if (!errorWithEncryption())
             {
+                // set key 
+                this.setKey();
+
+                // add .des extention
+                string output = string.Concat(fileNameString, ".des");
+
+                // check if file exists
+                if (File.Exists(output))
+                {
+                    // prompt for overwrite
+                    if (MessageBox.Show("Output file exists. Overwrite?", "File Exists", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                }
+
                 // perform encryption
-                keyString = adjustKey(keyString);
-                encryptFile(fileNameString, outputFileName, keyString);
+                encryptFile(fileNameString, output, this.key, this.key);
             }
         }
 
@@ -54,96 +66,88 @@ namespace Lab7
             }
         }
 
-
-        /* Utility methods */
-
         private void openFile()
         {
-            // init stream and dialog
-            Stream myStream = null;
+            // init dialog
             OpenFileDialog openDialog = new OpenFileDialog();
-            openDialog.InitialDirectory = "c:\\";
-            openDialog.RestoreDirectory = true;
 
             // user pressed ok
             if (openDialog.ShowDialog() == DialogResult.OK)
             {
-                try
-                {
-                    // if the file stream is not empty
-                    if ((myStream = openDialog.OpenFile()) != null)
-                    {
-                        using (myStream)
-                        {
-                            // set file text box as file name
-                            fileNameString = openDialog.FileName;
-                            fileTextBox.Text = fileNameString;
- 
-                            // set output file name
-                            outputFileName = fileNameString + ".des";
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show("Error: Could not read file from disk." + e.Message);
-                }
+                // set file text box as file name
+                fileNameString = openDialog.FileName;
+                fileTextBox.Text = fileNameString;
             }
         }
 
-        private void encryptFile(string fileNameIn, string fileNameOut, string secretKey)
+        private void encryptFile(string fileNameIn, string fileNameOut, byte[] desKey, byte[] desIV)
         {
+            // must init file streams
+            FileStream inStream = null;
+            FileStream outStream = null;
+
             try
             {
                 // init file streams to handle input and output
-                FileStream inStream = new FileStream(fileNameIn, FileMode.Open, FileAccess.Read);
-                FileStream outStream = new FileStream(fileNameOut, FileMode.OpenOrCreate, FileAccess.Write);
-                outStream.SetLength(0);
-                Console.WriteLine("Encrypting file...");
-
-                // instantiate DES provider
-                DES des = new DESCryptoServiceProvider();
-                des.Key = ASCIIEncoding.ASCII.GetBytes(secretKey); 
-                des.IV = ASCIIEncoding.ASCII.GetBytes(secretKey);
-
-                // create instance of CryptoStream to obtain encrypting object
-                ICryptoTransform desEncrypt = des.CreateEncryptor();
-                CryptoStream encStream = new CryptoStream(outStream, desEncrypt, CryptoStreamMode.Write);
-
-                // read input file and write to output using provided key
-                byte[] byteInput = new byte[secretKey.Length - 1];
-                inStream.Read(byteInput, 0, byteInput.Length);
-                encStream.Write(byteInput, 0, byteInput.Length);
-
-                // close streams
-                inStream.Close();
-                outStream.Close();
-                Console.WriteLine("Encryption Success. Output: {0}",fileNameOut);
+                inStream = new FileStream(fileNameIn, FileMode.Open, FileAccess.Read);
+                outStream = new FileStream(fileNameOut, FileMode.OpenOrCreate, FileAccess.Write);
+                outStream.SetLength((long)0);
             }
-            catch (CryptographicException e)
+
+            catch
             {
-                Console.WriteLine("Error: {0}", e.Message);
+                MessageBox.Show("Could not open source or destination file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+
+                if (inStream != null)
+                    inStream.Close();
+                if (outStream != null)                
+                    outStream.Close();
+
                 return;
             }
-            catch (UnauthorizedAccessException e)
+
+            // init byte array
+            byte[] byteArray = new byte[100];
+            long var = (long)0;
+            long len = inStream.Length;
+
+            // instantiate DES provider
+            DES des = new DESCryptoServiceProvider();
+            CryptoStream encStream = new CryptoStream(outStream, des.CreateEncryptor(desKey, desIV), CryptoStreamMode.Write);                
+
+            // read input file and write to output using provided key
+            while (var < len)
             {
-                Console.WriteLine("Error: {0}", e.Message);
+                int dummy = inStream.Read(byteArray, 0, 100);
+                encStream.Write(byteArray, 0, dummy);
+                var = var + (long)dummy;
             }
+
+            // close streams
+            encStream.Close();
+            outStream.Close();
+            inStream.Close();
+            Console.WriteLine("Encryption Success. Output: {0}",fileNameOut);     
+        }
+
+        private void decryptFile(string fileNameIn, string fileNameOut, string secretKey)
+        {
 
         }
 
-        public string adjustKey(string key)
+        private void setKey()
         {
-            if (key.Length == 8) return key;
-            else if (key.Length > 8)
-                return key.Remove(7, (key.Length - 8));
-            else if (key.Length < 8)
-                return key.PadRight(8, 'x');
-            else return key;
+            // init key
+            this.key = new byte[8];
+            int dummy = 0;
+            for (int i = 0; i < keyString.Length; i++)
+            {
+                this.key[dummy] = (byte)(this.key[dummy] + (byte)this.keyString[i]);
+                dummy = (dummy + 1) % 8;
+            }
         }
 
         /* Error detection methods */
-
         private bool errorWithEncryption()
         {
             // check key text box
@@ -177,7 +181,7 @@ namespace Lab7
             }
 
             // check for valid DES file OR empty file text box
-            
+
 
             else
                 return false;
